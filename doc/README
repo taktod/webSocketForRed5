@@ -9,3 +9,19 @@ I use these jar files as Referenced Libraries
  red5.jar
  spring-context-3.0.0.jar
 
+how to use this.
+compile and make jar file with manifest.mf. (WebSocketPlugin.jar)
+put this jar on red5-home/plugins/
+write this on red5-home/conf/red5.xml after PluginLauncher
+	<bean id="webSocketTransport" class="com.ttProject.red5.server.plugin.websocket.WebSocketTransport" init-method="start">
+		<property name="port" value="8080"/>
+	</bean>
+run red5 on console.
+connect with red5 server on that port number(8080) from WebSocket.
+send some message, you can see that message on console.
+
+I checked this with red5 0.9.1 on Mac.
+and Google Chrome, Safari on Mac, Google Chrome on WinXP
+
+Thanks
+Takahiko Toda(poepoemix@hotmail.com)
