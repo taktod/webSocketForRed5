@@ -30,7 +30,7 @@ public class WebSocketPlugin extends Red5Plugin{
 	 */
 	@Override
 	public String getName() {
-		return super.getName();
+		return "WebSocketPlugin";
 	}
 	/**
 	 * {@inheritDoc}
@@ -44,6 +44,7 @@ public class WebSocketPlugin extends Red5Plugin{
 	 */
 	@Override
 	public void setApplication(MultiThreadedApplicationAdapter application) {
+		WebSocketScopeManager.addPluginedApplication(application.getName());
 		super.setApplication(application);
 	}
 }

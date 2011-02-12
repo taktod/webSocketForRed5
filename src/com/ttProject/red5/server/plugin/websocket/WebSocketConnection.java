@@ -1,5 +1,6 @@
 package com.ttProject.red5.server.plugin.websocket;
 
+import org.apache.mina.core.buffer.IoBuffer;
 import org.apache.mina.core.session.IoSession;
 
 /**
@@ -96,5 +97,42 @@ public class WebSocketConnection {
 	 */
 	public void setPath(String path) {
 		this.path = path;
+	}
+	/**
+	 * get the connection id
+	 * @return id
+	 * @throws Exception when the session is invalid...
+	 */
+	public long getId() throws Exception{
+		if(session == null) {
+			throw new Exception("invalid connection");
+		}
+		return session.getId();
+	}
+	/**
+	 * sendmessage to client
+	 * @param buffer IoBuffer data
+	 */
+	public void send(IoBuffer buffer) {
+		session.write(buffer);
+	}
+	/**
+	 * sendmessage to client
+	 * @param data string data
+	 */
+	public void send(String data) {
+		// 前後に0x00と0xFFをくっつけて、データをおくる。
+		IoBuffer buffer = IoBuffer.allocate(data.length() + 4);
+		buffer.put((byte)0x00);
+		buffer.put(data.getBytes());
+		buffer.put((byte)0xFF);
+		buffer.flip();
+		session.write(buffer);
+	}
+	/**
+	 * close Connection
+	 */
+	public void close() {
+		session.close(true);
 	}
 }

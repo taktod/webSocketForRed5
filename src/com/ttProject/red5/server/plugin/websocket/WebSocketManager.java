@@ -9,7 +9,6 @@ import org.apache.mina.core.session.IoSession;
  * manage websocket packet.
  * </pre>
  * @author todatakahiko
- *
  */
 public class WebSocketManager {
 	private WebSocketConnection conn;

@@ -40,6 +40,18 @@ public class WebSocketHandshake {
 						String[] ary = data.split("GET ");
 						ary = ary[1].split(" HTTP/1.1");
 						conn.setPath(ary[0]);
+						ary = ary[0].split("/");
+						if(ary.length <= 1 || !WebSocketScopeManager.isPluginedApplication(ary[1])) {
+							// scope is not application. handshake will be false;
+							// send disconnect message.
+							IoBuffer buf = IoBuffer.allocate(4);
+							buf.put(new byte[]{(byte)0xFF, (byte)0x00});
+							buf.flip();
+							conn.send(buf);
+							// close connection.
+							conn.close();
+							return;
+						}
 					}
 					else if(data.contains("Sec-WebSocket-Key1")) {
 						// get the key1 data
@@ -143,7 +155,7 @@ public class WebSocketHandshake {
 		conn.getSession().write(buf);
 		// handshake is finished.
 		conn.setConnected();
-		System.out.println("HandShake complete");
+		System.out.println("HandShake complete" + conn.getSession().getId());
 	}
 	/**
 	 * calicurate integer data.
