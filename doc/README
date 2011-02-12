@@ -1,1 +1,11 @@
 I want to make a plugin to handle websocket on red5 server.
+
+develop with eclipse herios.
+I use these jar files as Referenced Libraries
+ logback-core-0.9.18.jar
+ logback-classic-0.9.18.jar
+ slf4j-api-1.5.10.jar
+ mina-core-2.0.0-RC1.jar
+ red5.jar
+ spring-context-3.0.0.jar
+
