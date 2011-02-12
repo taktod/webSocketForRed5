@@ -1,0 +1,5 @@
+Manifest-Version: 1.0
+Red5-Plugin-Main-Class: com.ttProject.red5.server.plugin.websocket.WebSocketPlugin
+
+Name: WebSocketPlugin.class
+Java-Bean: True
