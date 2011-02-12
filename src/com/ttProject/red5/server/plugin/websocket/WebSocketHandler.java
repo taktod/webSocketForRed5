@@ -15,17 +15,26 @@ import org.slf4j.LoggerFactory;
  */
 public class WebSocketHandler extends IoHandlerAdapter{
 	private static final Logger log = LoggerFactory.getLogger(WebSocketHandler.class);
+	/**
+	 * {@inheritDoc}
+	 */
 	@Override
 	public void exceptionCaught(IoSession session, Throwable cause)
 			throws Exception {		
 		log.error("exception", cause);
 		super.exceptionCaught(session, cause);
 	}
+	/**
+	 * {@inheritDoc}
+	 */
 	@Override
 	public void sessionCreated(IoSession session) throws Exception {
 		session.setAttribute("manager", new WebSocketManager(session));
 		super.sessionCreated(session);
 	}
+	/**
+	 * {@inheritDoc}
+	 */
 	@Override
 	public void messageReceived(IoSession session, Object message)
 			throws Exception {

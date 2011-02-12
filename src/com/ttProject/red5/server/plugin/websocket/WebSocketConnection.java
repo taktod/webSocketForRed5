@@ -2,6 +2,12 @@ package com.ttProject.red5.server.plugin.websocket;
 
 import org.apache.mina.core.session.IoSession;
 
+/**
+ * WebSocketConnection
+ * <pre>
+ * data for connection.
+ * </pre>
+ */
 public class WebSocketConnection {
 	private boolean connected = false;
 	private IoSession session;

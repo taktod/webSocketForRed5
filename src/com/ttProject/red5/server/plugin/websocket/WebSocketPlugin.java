@@ -11,29 +11,39 @@ import org.red5.server.plugin.Red5Plugin;
  * and hold the application Context or Application Adapter
  * </pre>
  * @author Toda Takahiko
- *
  */
 public class WebSocketPlugin extends Red5Plugin{
+	/**
+	 * constructor
+	 */
 	public WebSocketPlugin() {
 	}
+	/**
+	 * {@inheritDoc}
+	 */
 	@Override
 	public void doStart() throws Exception {
-		// TODO Auto-generated method stub
 		super.doStart();
 	}
+	/**
+	 * {@inheritDoc}
+	 */
 	@Override
 	public String getName() {
-		// TODO Auto-generated method stub
 		return super.getName();
 	}
+	/**
+	 * {@inheritDoc}
+	 */
 	@Override
 	public Server getServer() {
-		// TODO Auto-generated method stub
 		return super.getServer();
 	}
+	/**
+	 * {@inheritDoc}
+	 */
 	@Override
 	public void setApplication(MultiThreadedApplicationAdapter application) {
-		// TODO Auto-generated method stub
 		super.setApplication(application);
 	}
 }

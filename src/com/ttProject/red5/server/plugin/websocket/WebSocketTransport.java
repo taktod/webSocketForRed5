@@ -63,6 +63,9 @@ public class WebSocketTransport {
 	public void setIoThreads(int ioThreads) {
 		this.ioThreads = ioThreads;
 	}
+	/**
+	 * initialize IoHandler when ioHandler is not set yet.
+	 */
 	private void initIoHandler() {
 		if(ioHandler == null) {
 			log.info("No WebSocket Io Handler associated - using defaults");

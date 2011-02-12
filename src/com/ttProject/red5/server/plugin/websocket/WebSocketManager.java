@@ -3,6 +3,14 @@ package com.ttProject.red5.server.plugin.websocket;
 import org.apache.mina.core.buffer.IoBuffer;
 import org.apache.mina.core.session.IoSession;
 
+/**
+ * WebSocketManager
+ * <pre>
+ * manage websocket packet.
+ * </pre>
+ * @author todatakahiko
+ *
+ */
 public class WebSocketManager {
 	private WebSocketConnection conn;
 
@@ -12,9 +20,17 @@ public class WebSocketManager {
 	public WebSocketConnection getConn() {
 		return conn;
 	}
+	/**
+	 * constructor with session
+	 * @param session session instance
+	 */
 	public WebSocketManager(IoSession session) {
 		conn = new WebSocketConnection(session);
 	}
+	/**
+	 * set message for websocket
+	 * @param buffer
+	 */
 	public void setMessage(IoBuffer buffer) {
 		System.out.println(buffer.getHexDump());
 		if(conn.isConnected()) {
@@ -31,6 +47,12 @@ public class WebSocketManager {
 			handshake.handShake(buffer);
 		}
 	}
+	/**
+	 * cut off first 0x00 and last 0xFF
+	 * @param buffer input buffer data
+	 * @return String data from client
+	 * @throws Exception when we get invalid input.
+	 */
 	private String getData(IoBuffer buffer) throws Exception {
 		byte[] b = new byte[buffer.capacity()];
 		int i = 0;
