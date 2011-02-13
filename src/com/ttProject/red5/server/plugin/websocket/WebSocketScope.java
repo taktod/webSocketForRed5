@@ -1,5 +1,6 @@
 package com.ttProject.red5.server.plugin.websocket;
 
+import java.io.UnsupportedEncodingException;
 import java.util.HashSet;
 import java.util.Set;
 
@@ -75,7 +76,10 @@ public class WebSocketScope {
 				listener.getData(buffer);
 				listener.getMessage(getData(buffer));
 			}
-			catch(Exception e) {
+			catch(UnsupportedEncodingException e) {
+				e.printStackTrace();
+			}
+			catch(WebSocketException e) {
 				e.printStackTrace();
 			}
 		}
@@ -84,9 +88,10 @@ public class WebSocketScope {
 	 * cut off first 0x00 and last 0xFF
 	 * @param buffer input buffer data
 	 * @return String data from client
-	 * @throws Exception when we get invalid input.
+	 * @throws UnsupportedEncodingException 
+	 * @throws WebSocketException when we get invalid input.
 	 */
-	private String getData(IoBuffer buffer) throws Exception {
+	private String getData(IoBuffer buffer) throws WebSocketException, UnsupportedEncodingException {
 		byte[] b = new byte[buffer.capacity()];
 		int i = 0;
 		for(byte bi:buffer.array()) {
@@ -96,7 +101,7 @@ public class WebSocketScope {
 					continue;
 				}
 				else {
-					throw new Exception("first byte must be 0x00 for websocket");
+					throw new WebSocketException("first byte must be 0x00 for websocket");
 				}
 			}
 			if(bi == (byte)0xFF) {

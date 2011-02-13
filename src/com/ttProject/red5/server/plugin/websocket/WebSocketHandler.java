@@ -29,7 +29,7 @@ public class WebSocketHandler extends IoHandlerAdapter{
 	 */
 	@Override
 	public void sessionCreated(IoSession session) throws Exception {
-		session.setAttribute("manager", new WebSocketManager(session));
+		session.setAttribute("connection", new WebSocketConnection(session));
 		super.sessionCreated(session);
 	}
 	/**
@@ -38,8 +38,8 @@ public class WebSocketHandler extends IoHandlerAdapter{
 	@Override
 	public void sessionClosed(IoSession session) throws Exception {
 		// remove connection from scope.
-		WebSocketManager manager = (WebSocketManager)session.getAttribute("manager");
-		manager.getConnection().close();
+		WebSocketConnection conn = (WebSocketConnection)session.getAttribute("connection");
+		conn.close();
 		super.sessionClosed(session);
 	}
 	/**
@@ -49,8 +49,8 @@ public class WebSocketHandler extends IoHandlerAdapter{
 	public void messageReceived(IoSession session, Object message)
 			throws Exception {
 		if(message instanceof IoBuffer) {
-			WebSocketManager manager = (WebSocketManager)session.getAttribute("manager");
-			manager.setMessage((IoBuffer)message);
+			WebSocketConnection conn = (WebSocketConnection)session.getAttribute("connection");
+			conn.receive((IoBuffer)message);
 		}
 		super.messageReceived(session, message);
 	}

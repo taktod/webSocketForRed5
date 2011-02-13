@@ -1,5 +1,6 @@
 package com.ttProject.red5.server.plugin.websocket;
 
+import java.io.IOException;
 import java.net.InetSocketAddress;
 import java.util.concurrent.Executor;
 import java.util.concurrent.Executors;
@@ -74,8 +75,9 @@ public class WebSocketTransport {
 	}
 	/**
 	 * start to listen ports;
+	 * @throws IOException 
 	 */
-	public void start() throws Exception{
+	public void start() throws IOException {
 		initIoHandler();
 		Executor connectionExecutor = Executors.newFixedThreadPool(connectionThreads);
 		Executor ioExecutor = Executors.newFixedThreadPool(ioThreads);
@@ -88,7 +90,6 @@ public class WebSocketTransport {
 		sessionConf.setSendBufferSize(sendBufferSize);
 		
 		acceptor.setReuseAddress(true);
-//		acceptor.getFilterChain().addLast("protocol", new ProtocolCodecFilter(new WebSocketCodecFactory()));
 		acceptor.bind(new InetSocketAddress(port));
 		log.info("start web socket");
 	}

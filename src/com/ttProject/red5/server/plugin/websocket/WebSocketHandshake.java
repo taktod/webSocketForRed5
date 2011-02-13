@@ -33,7 +33,7 @@ public class WebSocketHandshake {
 	 * </pre>
 	 * @param buffer ioBuffer
 	 */
-	public void handShake(IoBuffer buffer) {
+	public void handShake(IoBuffer buffer) throws WebSocketException {
 		byte[] b = new byte[buffer.capacity()];
 		String data;
 		int i = 0;
@@ -58,7 +58,7 @@ public class WebSocketHandshake {
 							conn.send(buf);
 							// close connection.
 							conn.close();
-							return;
+							throw new WebSocketException("failed for handshaking.");
 						}
 					}
 					else if(data.contains("Sec-WebSocket-Key1")) {
@@ -102,14 +102,12 @@ public class WebSocketHandshake {
 	 * start the handshake reply
 	 * @param key3
 	 */
-	private void doHandShake() {
+	private void doHandShake() throws WebSocketException {
 		if(key3 == null) {
-			System.out.println("last byte is incollect");
-			return;
+			throw new WebSocketException("last byte is incollect!");
 		}
 		if(key1 == null || key2 == null) {
-			System.out.println("key data is missing");
-			return;
+			throw new WebSocketException("key data is missing");
 		}
 		// calicurate first 16 byte of integer data;
 		byte[] b = new byte[16];
@@ -138,11 +136,11 @@ public class WebSocketHandshake {
 		}
 		catch(NoSuchAlgorithmException e) {
 			e.printStackTrace();
-			return;
+			throw new WebSocketException("MD5 algorithm is missing.");
 		}
 		catch(ArrayIndexOutOfBoundsException e) {
 			e.printStackTrace();
-			return;
+			throw new WebSocketException("Data is too short.");
 		}
 		// make up reply data...
 		IoBuffer buf = IoBuffer.allocate(2048);
@@ -167,7 +165,7 @@ public class WebSocketHandshake {
 		// scopeÇÇ¬Ç≠Ç¡ÇƒÇ®Ç≠ÅB
 		WebSocketScopeManager manager = new WebSocketScopeManager();
 		manager.addConnection(conn);
-		System.out.println("HandShake complete" + conn.getSession().getId());
+		System.out.println("HandShake complete");
 	}
 	/**
 	 * calicurate integer data.

@@ -1,5 +1,7 @@
 package com.ttProject.red5.server.plugin.websocket;
 
+import java.io.UnsupportedEncodingException;
+
 import org.apache.mina.core.buffer.IoBuffer;
 import org.apache.mina.core.session.IoSession;
 
@@ -81,11 +83,11 @@ public class WebSocketConnection {
 	/**
 	 * get the connection id
 	 * @return id
-	 * @throws Exception when the session is invalid...
+	 * @throws WebSocketException when the session is invalid...
 	 */
-	public long getId() throws Exception{
+	public long getId() throws WebSocketException{
 		if(session == null) {
-			throw new Exception("invalid connection");
+			throw new WebSocketException("invalid connection");
 		}
 		return session.getId();
 	}
@@ -99,30 +101,35 @@ public class WebSocketConnection {
 	/**
 	 * sendmessage to client
 	 * @param data string data
+	 * @throws UnsupportedEncodingException 
 	 */
-	public void send(String data) {
-		try {
-			IoBuffer buffer = IoBuffer.allocate(data.getBytes("UTF8").length + 4);
-			buffer.put((byte)0x00);
-			buffer.put(data.getBytes("UTF8"));
-			buffer.put((byte)0xFF);
-			buffer.flip();
-			session.write(buffer);
-		}
-		catch(Exception e) {
-			System.out.println("error!!");
-			return;
-		}
+	public void send(String data) throws UnsupportedEncodingException{
+		IoBuffer buffer = IoBuffer.allocate(data.getBytes("UTF8").length + 4);
+		buffer.put((byte)0x00);
+		buffer.put(data.getBytes("UTF8"));
+		buffer.put((byte)0xFF);
+		buffer.flip();
+		session.write(buffer);
 	}
 	/**
 	 * receive message
 	 * @param buffer
 	 */
 	public void receive(IoBuffer buffer) {
-		System.out.println(buffer.getHexDump());
-		WebSocketScopeManager manager = new WebSocketScopeManager();
-		WebSocketScope scope = manager.getScope(getPath());
-		scope.setMessage(buffer);
+		if(isConnected()) {
+			WebSocketScopeManager manager = new WebSocketScopeManager();
+			WebSocketScope scope = manager.getScope(getPath());
+			scope.setMessage(buffer);
+		}
+		else {
+			WebSocketHandshake handshake = new WebSocketHandshake(this);
+			try {
+				handshake.handShake(buffer);
+			}
+			catch(WebSocketException e) {
+				e.printStackTrace();
+			}
+		}
 	}
 	/**
 	 * close Connection
