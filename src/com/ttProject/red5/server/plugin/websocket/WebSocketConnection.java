@@ -109,6 +109,12 @@ public class WebSocketConnection {
 		buffer.flip();
 		session.write(buffer);
 	}
+	public void receive(IoBuffer buffer) {
+		// この処理はそのままscopeに流すことで、listenersにデータを流すようにしておく。
+		WebSocketScopeManager manager = new WebSocketScopeManager();
+		WebSocketScope scope = manager.getScope(getPath());
+		scope.setMessage(buffer);
+	}
 	/**
 	 * close Connection
 	 */
