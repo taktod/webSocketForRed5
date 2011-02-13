@@ -1,5 +1,6 @@
 package com.ttProject.red5.server.plugin.websocket;
 
+import java.nio.charset.Charset;
 import java.util.HashSet;
 import java.util.Set;
 
@@ -27,6 +28,7 @@ public class WebSocketScope {
 		listeners.add(listener);
 	}
 	public void removeListener(IWebSocketDataListener listener) {
+		System.out.println("remove:" + listener.getPath());
 		listeners.remove(listener);
 	}
 	public boolean isValid() {
@@ -70,6 +72,6 @@ public class WebSocketScope {
 			}
 			b[i - 2] = bi;
 		}
-		return new String(b).trim();
+		return new String(b, Charset.forName("SJIS")).trim();
 	}
 }

@@ -1,17 +1,15 @@
 package com.ttProject.red5.server.plugin.websocket;
 
 import org.apache.mina.core.buffer.IoBuffer;
+import org.red5.server.api.IScope;
 
 public abstract class WebSocketAbstructData implements IWebSocketDataListener {
-	private String path;
-	public WebSocketAbstructData(WebSocketConnection conn) {
-		String path = conn.getPath();
-		if(path.charAt(path.length() - 1) == '/') {
-			this.path = "/" + path.substring(0, path.length() - 1);
-		}
-		else {
-			this.path = "/" + path;
-		}
+	protected String path;
+	public WebSocketAbstructData(IScope scope) {
+		String path = scope.getPath() + "/" + scope.getName();
+		System.out.println("WebSocketAbstructData:" + path);
+		String[] ary = path.split("/default");
+		this.path = ary[1];
 	}
 	@Override
 	public String getPath() {

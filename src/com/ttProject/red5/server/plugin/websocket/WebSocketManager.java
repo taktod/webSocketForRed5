@@ -31,7 +31,6 @@ public class WebSocketManager {
 	 * @param buffer
 	 */
 	public void setMessage(IoBuffer buffer) {
-		System.out.println(buffer.getHexDump());
 		if(conn.isConnected()) {
 			conn.receive(buffer);
 		}
