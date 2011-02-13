@@ -37,6 +37,9 @@ public class WebSocketScope {
 	 */
 	public void addConnection(WebSocketConnection conn) {
 		conns.add(conn);
+		for(IWebSocketDataListener listener:listeners) {
+			listener.connect(conn);
+		}
 	}
 	/**
 	 * remove connection from scope
@@ -44,6 +47,9 @@ public class WebSocketScope {
 	 */
 	public void removeConnection(WebSocketConnection conn) {
 		conns.remove(conn);
+		for(IWebSocketDataListener listener:listeners) {
+			listener.leave(conn);
+		}
 	}
 	/**
 	 * add new listener on scope

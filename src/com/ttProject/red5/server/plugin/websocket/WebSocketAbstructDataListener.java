@@ -1,6 +1,5 @@
 package com.ttProject.red5.server.plugin.websocket;
 
-import org.apache.mina.core.buffer.IoBuffer;
 import org.red5.server.api.IScope;
 
 /**
@@ -28,16 +27,4 @@ public abstract class WebSocketAbstructDataListener implements IWebSocketDataLis
 	public String getPath() {
 		return path;
 	}
-
-	/**
-	 * {@inheritDoc}
-	 */
-	@Override
-	public abstract void getData(IoBuffer buf);
-
-	/**
-	 * {@inheritDoc}
-	 */
-	@Override
-	public abstract void getMessage(String message);
 }

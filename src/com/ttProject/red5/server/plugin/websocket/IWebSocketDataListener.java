@@ -23,4 +23,14 @@ public interface IWebSocketDataListener {
 	 * @param message
 	 */
 	public void getMessage(String message);
+	/**
+	 * on connect new WebSocket client
+	 * @param conn WebSocketConnection
+	 */
+	public void connect(WebSocketConnection conn);
+	/**
+	 * on leave WebSocket client
+	 * @param conn WebSocketConnection
+	 */
+	public void leave(WebSocketConnection conn);
 }
