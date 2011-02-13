@@ -36,6 +36,16 @@ public class WebSocketHandler extends IoHandlerAdapter{
 	 * {@inheritDoc}
 	 */
 	@Override
+	public void sessionClosed(IoSession session) throws Exception {
+		// connectionをスコープから削除する。
+		WebSocketManager manager = (WebSocketManager)session.getAttribute("manager");
+		manager.getConnection().close();
+		super.sessionClosed(session);
+	}
+	/**
+	 * {@inheritDoc}
+	 */
+	@Override
 	public void messageReceived(IoSession session, Object message)
 			throws Exception {
 		if(message instanceof IoBuffer) {

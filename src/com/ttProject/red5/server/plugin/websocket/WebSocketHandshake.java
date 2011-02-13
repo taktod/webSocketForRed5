@@ -13,6 +13,12 @@ import org.apache.mina.core.buffer.IoBuffer;
  */
 public class WebSocketHandshake {
 	private WebSocketConnection conn;
+	private String key1;
+	private String key2;
+	private String origin;
+	private String host;
+	private String path;
+	private byte[] key3;
 	/**
 	 * constructor with connection object.
 	 * @param conn connection object.
@@ -39,9 +45,11 @@ public class WebSocketHandshake {
 						// get the path data for handShake
 						String[] ary = data.split("GET ");
 						ary = ary[1].split(" HTTP/1.1");
+						path = ary[0];
 						conn.setPath(ary[0]);
 						ary = ary[0].split("/");
-						if(ary.length <= 1 || !WebSocketScopeManager.isPluginedApplication(ary[1])) {
+						WebSocketScopeManager manager = new WebSocketScopeManager();
+						if(ary.length <= 1 || !manager.isPluginedApplication(ary[1])) {
 							// scope is not application. handshake will be false;
 							// send disconnect message.
 							IoBuffer buf = IoBuffer.allocate(4);
@@ -55,20 +63,22 @@ public class WebSocketHandshake {
 					}
 					else if(data.contains("Sec-WebSocket-Key1")) {
 						// get the key1 data
-						conn.setKey1(data);
+						key1 = data;
 					}
 					else if(data.contains("Sec-WebSocket-Key2")) {
 						// get the key2 data
-						conn.setKey2(data);
+						key2 = data;
 					}
 					else if(data.contains("Host")) {
 						// get the host data
 						String[] ary = data.split("Host: ");
+						host = ary[1];
 						conn.setHost(ary[1]);
 					}
 					else if(data.contains("Origin")) {
 						// get the origin data
 						String[] ary = data.split("Origin: ");
+						origin = ary[1];
 						conn.setOrigin(ary[1]);
 					}
 					// for the information print out the string data.
@@ -84,20 +94,19 @@ public class WebSocketHandshake {
 				i ++;
 			}
 		}
+		key3 = b;
 		// start the handshake reply
-		doHandShake(b);
+		doHandShake();
 	}
 	/**
 	 * start the handshake reply
 	 * @param key3
 	 */
-	private void doHandShake(byte[] key3) {
+	private void doHandShake() {
 		if(key3 == null) {
 			System.out.println("last byte is incollect");
 			return;
 		}
-		String key1 = conn.getKey1();
-		String key2 = conn.getKey2();
 		if(key1 == null || key2 == null) {
 			System.out.println("key data is missing");
 			return;
@@ -142,9 +151,9 @@ public class WebSocketHandshake {
 		buf.put(bb);
 		buf.put("Upgrade: WebSocket".getBytes());
 		buf.put(bb);
-		buf.put(("Sec-WebSocket-Origin: " + conn.getOrigin()).getBytes());
+		buf.put(("Sec-WebSocket-Origin: " + origin).getBytes());
 		buf.put(bb);
-		buf.put(("Sec-WebSocket-Location: " + conn.getHost()).getBytes());
+		buf.put(("Sec-WebSocket-Location: " + "ws://" + host + path).getBytes());
 		buf.put(bb);
 		buf.put("Sec-WebSocket-Protocol: sample".getBytes());
 		buf.put(bb);
@@ -155,6 +164,9 @@ public class WebSocketHandshake {
 		conn.getSession().write(buf);
 		// handshake is finished.
 		conn.setConnected();
+		// scope‚ð‚Â‚­‚Á‚Ä‚¨‚­B
+		WebSocketScopeManager manager = new WebSocketScopeManager();
+		manager.addConnection(conn);
 		System.out.println("HandShake complete" + conn.getSession().getId());
 	}
 	/**

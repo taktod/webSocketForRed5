@@ -16,7 +16,7 @@ public class WebSocketManager {
 	/**
 	 * @return the conn
 	 */
-	public WebSocketConnection getConn() {
+	public WebSocketConnection getConnection() {
 		return conn;
 	}
 	/**

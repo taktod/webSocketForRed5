@@ -12,8 +12,6 @@ import org.apache.mina.core.session.IoSession;
 public class WebSocketConnection {
 	private boolean connected = false;
 	private IoSession session;
-	private String key1;
-	private String key2;
 	private String host;
 	private String path;
 	private String origin;
@@ -35,32 +33,6 @@ public class WebSocketConnection {
 	 */
 	public void setConnected() {
 		connected = true;
-		key1 = null;
-		key2 = null;
-	}
-	/**
-	 * @return the key1
-	 */
-	public String getKey1() {
-		return key1;
-	}
-	/**
-	 * @param key1 the key1 to set
-	 */
-	public void setKey1(String key1) {
-		this.key1 = key1;
-	}
-	/**
-	 * @return the key2
-	 */
-	public String getKey2() {
-		return key2;
-	}
-	/**
-	 * @param key2 the key2 to set
-	 */
-	public void setKey2(String key2) {
-		this.key2 = key2;
 	}
 	/**
 	 * @return the host
@@ -92,11 +64,19 @@ public class WebSocketConnection {
 	public IoSession getSession() {
 		return session;
 	}
+	public String getPath() {
+		return path;
+	}
 	/**
 	 * @param path the path to set
 	 */
 	public void setPath(String path) {
-		this.path = path;
+		if(path.charAt(path.length()-1) == '/') {
+			this.path = path.substring(0, path.length()-1);
+		}
+		else {
+			this.path = path;
+		}
 	}
 	/**
 	 * get the connection id
@@ -133,6 +113,8 @@ public class WebSocketConnection {
 	 * close Connection
 	 */
 	public void close() {
+		WebSocketScopeManager manager = new WebSocketScopeManager();
+		manager.removeConnection(this);
 		session.close(true);
 	}
 }
