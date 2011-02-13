@@ -5,6 +5,10 @@ import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
 
+/**
+ * to manage scopes.
+ * @author todatakahiko
+ */
 public class WebSocketScopeManager {
 	private static Set<String> pluginedApplicationSet = new HashSet<String>();
 	private static Map<String, WebSocketScope> scopes = new HashMap<String, WebSocketScope>();
@@ -28,12 +32,19 @@ public class WebSocketScopeManager {
 	public WebSocketScope getScope(String path) {
 		return scopes.get(path);
 	}
+	/**
+	 * add the connection on scope.
+	 * @param conn WebSocketConnection
+	 */
 	public void addConnection(WebSocketConnection conn) {
-		// コネクションに対するスコープが存在するか確認し、なければ作成する。
 		WebSocketScope scope;
 		scope = getScope(conn);
 		scope.addConnection(conn);
 	}
+	/**
+	 * remove connection from scope.
+	 * @param conn WebSocketConnection
+	 */
 	public void removeConnection(WebSocketConnection conn) {
 		WebSocketScope scope;
 		scope = getScope(conn);
@@ -43,11 +54,19 @@ public class WebSocketScopeManager {
 			scopes.remove(scope);
 		}
 	}
+	/**
+	 * add the listener on scope
+	 * @param listener IWebSocketDataListener
+	 */
 	public void addListener(IWebSocketDataListener listener) {
 		WebSocketScope scope;
 		scope = getScope(listener);
 		scope.addListener(listener);
 	}
+	/**
+	 * remove listener from scope.
+	 * @param listener IWebSocketDataListener
+	 */
 	public void removeListener(IWebSocketDataListener listener) {
 		WebSocketScope scope;
 		scope = getScope(listener);
@@ -58,7 +77,7 @@ public class WebSocketScopeManager {
 		}
 	}
 	/**
-	 * check the map of scope and get the collect scope.
+	 * get corresponging scope, if no scope, make new one.
 	 * @param conn 
 	 * @return
 	 */
@@ -73,6 +92,11 @@ public class WebSocketScopeManager {
 		}
 		return scope;
 	}
+	/**
+	 * get corresponding scope, if no scope, make new one.
+	 * @param listener 
+	 * @return
+	 */
 	private WebSocketScope getScope(IWebSocketDataListener listener) {
 		WebSocketScope scope;
 		if(!scopes.containsKey(listener.getPath())) {

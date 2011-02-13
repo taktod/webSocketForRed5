@@ -1,6 +1,5 @@
 package com.ttProject.red5.server.plugin.websocket;
 
-import java.nio.charset.Charset;
 import java.util.HashSet;
 import java.util.Set;
 
@@ -10,32 +9,65 @@ public class WebSocketScope {
 	private String path;
 	private Set<WebSocketConnection> conns = new HashSet<WebSocketConnection>();
 	private Set<IWebSocketDataListener> listeners = new HashSet<IWebSocketDataListener>();
+	/**
+	 * constructor
+	 * @param path path data
+	 */
 	public WebSocketScope(String path) {
-		this.path = path; // /room/nameの形でくる。
+		this.path = path; // /room/name
 	}
-	// 起動時にわかるはずだから、scopeに登録されていない。applicationに対しては応答しないようにしておく。
+	/**
+	 * get the set of connections
+	 * @return the conns
+	 */
+	public Set<WebSocketConnection> getConns() {
+		return conns;
+	}
+	/**
+	 * get the path info of scope
+	 * @return path data.
+	 */
 	public String getPath() {
 		return path;
 	}
+	/**
+	 * add new connection on　scope
+	 * @param conn WebSocketConnection
+	 */
 	public void addConnection(WebSocketConnection conn) {
 		conns.add(conn);
 	}
+	/**
+	 * remove connection from scope
+	 * @param conn WebSocketConnection
+	 */
 	public void removeConnection(WebSocketConnection conn) {
 		conns.remove(conn);
-		// コネクションがおちたときに、いままでscopeに設置していたconnを消す必要がある。
 	}
+	/**
+	 * add new listener on scope
+	 * @param listener IWebSocketDataListener
+	 */
 	public void addListener(IWebSocketDataListener listener) {
 		listeners.add(listener);
 	}
+	/**
+	 * remove listener from scope
+	 * @param listener IWebSocketDataListener
+	 */
 	public void removeListener(IWebSocketDataListener listener) {
 		System.out.println("remove:" + listener.getPath());
 		listeners.remove(listener);
 	}
+	/**
+	 * check the scope state.
+	 * @return true:still have relation
+	 */
 	public boolean isValid() {
 		return (conns.size() + listeners.size()) > 0;
 	}
 	/**
-	 * Socket経由できたメッセージに対処する。
+	 * get the message from client
 	 */
 	public void setMessage(IoBuffer buffer) {
 		for(IWebSocketDataListener listener:listeners) {
@@ -72,6 +104,6 @@ public class WebSocketScope {
 			}
 			b[i - 2] = bi;
 		}
-		return new String(b, Charset.forName("SJIS")).trim();
+		return new String(b, "SJIS").trim();
 	}
 }

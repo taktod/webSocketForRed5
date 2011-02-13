@@ -37,7 +37,7 @@ public class WebSocketHandler extends IoHandlerAdapter{
 	 */
 	@Override
 	public void sessionClosed(IoSession session) throws Exception {
-		// connectionをスコープから削除する。
+		// remove connection from scope.
 		WebSocketManager manager = (WebSocketManager)session.getAttribute("manager");
 		manager.getConnection().close();
 		super.sessionClosed(session);

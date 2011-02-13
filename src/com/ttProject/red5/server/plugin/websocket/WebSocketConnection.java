@@ -101,16 +101,25 @@ public class WebSocketConnection {
 	 * @param data string data
 	 */
 	public void send(String data) {
-		// 前後に0x00と0xFFをくっつけて、データをおくる。
-		IoBuffer buffer = IoBuffer.allocate(data.length() + 4);
-		buffer.put((byte)0x00);
-		buffer.put(data.getBytes());
-		buffer.put((byte)0xFF);
-		buffer.flip();
-		session.write(buffer);
+		try {
+			IoBuffer buffer = IoBuffer.allocate(data.getBytes("UTF8").length + 4);
+			buffer.put((byte)0x00);
+			buffer.put(data.getBytes("UTF8"));
+			buffer.put((byte)0xFF);
+			buffer.flip();
+			session.write(buffer);
+		}
+		catch(Exception e) {
+			System.out.println("error!!");
+			return;
+		}
 	}
+	/**
+	 * receive message
+	 * @param buffer
+	 */
 	public void receive(IoBuffer buffer) {
-		// この処理はそのままscopeに流すことで、listenersにデータを流すようにしておく。
+		System.out.println(buffer.getHexDump());
 		WebSocketScopeManager manager = new WebSocketScopeManager();
 		WebSocketScope scope = manager.getScope(getPath());
 		scope.setMessage(buffer);
