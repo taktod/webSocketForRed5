@@ -6,16 +6,21 @@ import java.util.Set;
 
 import org.apache.mina.core.buffer.IoBuffer;
 
+/**
+ * スコープでリスナーを選択する部分を変更して、アプリケーション(スコープの頭の部分)で振り分けを実行して動作するようにしておく。
+ * @author taktod
+ */
 public class WebSocketScope {
 	private String path;
 	private Set<WebSocketConnection> conns = new HashSet<WebSocketConnection>();
-	private Set<IWebSocketDataListener> listeners = new HashSet<IWebSocketDataListener>();
+	private IWebSocketDataListener listener;
 	/**
 	 * constructor
 	 * @param path path data
 	 */
-	public WebSocketScope(String path) {
+	public WebSocketScope(String path, IWebSocketDataListener listener) {
 		this.path = path; // /room/name
+		this.listener = listener;
 	}
 	/**
 	 * get the set of connections
@@ -32,14 +37,15 @@ public class WebSocketScope {
 		return path;
 	}
 	/**
-	 * add new connection on�@scope
+	 * add new connection on�@scope
 	 * @param conn WebSocketConnection
 	 */
 	public void addConnection(WebSocketConnection conn) {
 		conns.add(conn);
-		for(IWebSocketDataListener listener:listeners) {
-			listener.connect(conn);
-		}
+		listener.connect(conn);
+//		for(IWebSocketDataListener listener:listeners) {
+//			listener.connect(conn);
+//		}
 	}
 	/**
 	 * remove connection from scope
@@ -47,48 +53,39 @@ public class WebSocketScope {
 	 */
 	public void removeConnection(WebSocketConnection conn) {
 		conns.remove(conn);
-		for(IWebSocketDataListener listener:listeners) {
-			listener.leave(conn);
-		}
+		listener.leave(conn);
+//		for(IWebSocketDataListener listener:listeners) {
+//			listener.leave(conn);
+//		}
 	}
 	/**
 	 * add new listener on scope
 	 * @param listener IWebSocketDataListener
-	 */
+	 * /
 	public void addListener(IWebSocketDataListener listener) {
 		listeners.add(listener);
 	}
 	/**
 	 * remove listener from scope
 	 * @param listener IWebSocketDataListener
-	 */
+	 * /
 	public void removeListener(IWebSocketDataListener listener) {
 		System.out.println("remove:" + listener.getPath());
-		listeners.remove(listener);
+//		listeners.remove(listener);
 	}
 	/**
 	 * check the scope state.
 	 * @return true:still have relation
 	 */
 	public boolean isValid() {
-		return (conns.size() + listeners.size()) > 0;
+		return conns.size() > 0;
+//		return (conns.size() + listeners.size()) > 0;
 	}
 	/**
 	 * get the message from client
 	 */
-	public void setMessage(IoBuffer buffer) {
-		for(IWebSocketDataListener listener:listeners) {
-			try {
-				listener.getData(buffer);
-				listener.getMessage(getData(buffer));
-			}
-			catch(UnsupportedEncodingException e) {
-				e.printStackTrace();
-			}
-			catch(WebSocketException e) {
-				e.printStackTrace();
-			}
-		}
+	public void receiveData(WebSocketConnection conn, Object buffer) {
+		listener.receiveData(conn, buffer);
 	}
 	/**
 	 * cut off first 0x00 and last 0xFF
@@ -97,6 +94,7 @@ public class WebSocketScope {
 	 * @throws UnsupportedEncodingException 
 	 * @throws WebSocketException when we get invalid input.
 	 */
+	@SuppressWarnings("unused")
 	private String getData(IoBuffer buffer) throws WebSocketException, UnsupportedEncodingException {
 		byte[] b = new byte[buffer.capacity()];
 		int i = 0;
@@ -115,6 +113,7 @@ public class WebSocketScope {
 			}
 			b[i - 2] = bi;
 		}
+		// TODO Handle all data as UTF-8
 		return new String(b, "SJIS").trim();
 	}
 }

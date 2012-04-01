@@ -44,8 +44,9 @@ public class WebSocketPlugin extends Red5Plugin{
 	 */
 	@Override
 	public void setApplication(MultiThreadedApplicationAdapter application) {
-		WebSocketScopeManager manager = new WebSocketScopeManager();
-		manager.addPluginedApplication(application.getName());
+		// this method is not useful, just leave...
+//		WebSocketScopeManager manager = new WebSocketScopeManager();
+//		manager.addPluginedApplication(application.getName());
 		super.setApplication(application);
 	}
 }

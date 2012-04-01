@@ -2,8 +2,11 @@ package com.ttProject.red5.server.plugin.websocket;
 
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 import org.apache.mina.core.buffer.IoBuffer;
+import org.apache.mina.util.Base64;
 
 /**
  * WebSocketHandshake
@@ -19,6 +22,9 @@ public class WebSocketHandshake {
 	private String host;
 	private String path;
 	private byte[] key3;
+	private String version;
+	private String query;
+	private String key;
 	/**
 	 * constructor with connection object.
 	 * @param conn connection object.
@@ -37,54 +43,62 @@ public class WebSocketHandshake {
 		byte[] b = new byte[buffer.capacity()];
 		String data;
 		int i = 0;
+		version = "";
+		System.out.println("start...");
 		for(byte bi:buffer.array()) {
 			if(bi == 0x0D || bi == 0x0A) {
 				if(b.length != 0) {
 					data = (new String(b)).trim();
+//					System.out.println(data);
 					if(data.contains("GET ")) {
 						// get the path data for handShake
-						String[] ary = data.split("GET ");
-						ary = ary[1].split(" HTTP/1.1");
-						path = ary[0];
-						conn.setPath(ary[0]);
-						ary = ary[0].split("/");
-						WebSocketScopeManager manager = new WebSocketScopeManager();
-						if(ary.length <= 1 || !manager.isPluginedApplication(ary[1])) {
-							// scope is not application. handshake will be false;
-							// send disconnect message.
-							IoBuffer buf = IoBuffer.allocate(4);
-							buf.put(new byte[]{(byte)0xFF, (byte)0x00});
-							buf.flip();
-							conn.send(buf);
-							// close connection.
-							conn.close();
-							throw new WebSocketException("failed for handshaking.");
+						Pattern pattern = Pattern.compile("GET \\/([\\w\\/]*)\\??(.*) HTTP\\/1.1");
+						Matcher matcher = pattern.matcher(data);
+						if(matcher.find()) {
+							WebSocketScopeManager manager = new WebSocketScopeManager();
+							if(matcher.groupCount() != 2 || !manager.isPluginedApplication(matcher.group(1))) {
+								// invalid scope or application is not registered. failed for handshake.
+								break;
+							}
+							path = matcher.group(1);
+							conn.setPath(path);
+							query = matcher.group(2);
+							conn.setQuery(query);
 						}
 					}
-					else if(data.contains("Sec-WebSocket-Key1")) {
+					else if(data.contains("Sec-WebSocket-Key1: ")) {
 						// get the key1 data
 						key1 = data;
 					}
-					else if(data.contains("Sec-WebSocket-Key2")) {
+					else if(data.contains("Sec-WebSocket-Key2: ")) {
 						// get the key2 data
 						key2 = data;
 					}
-					else if(data.contains("Host")) {
+					else if(data.contains("Host: ")) {
 						// get the host data
 						String[] ary = data.split("Host: ");
 						host = ary[1];
 						conn.setHost(ary[1]);
 					}
-					else if(data.contains("Origin")) {
+					else if(data.contains("Origin: ")) {
 						// get the origin data
 						String[] ary = data.split("Origin: ");
 						origin = ary[1];
 						conn.setOrigin(ary[1]);
 					}
-					// for the information print out the string data.
-					if(data.length() > 4) {
-						System.out.println(data);
+					else if(data.contains("Sec-WebSocket-Key: ")) {
+						String[] ary = data.split("Sec-WebSocket-Key: ");
+						key = ary[1];
 					}
+					else if(data.contains("Sec-WebSocket-Version: ")) {
+						String[] ary = data.split("Sec-WebSocket-Version: ");
+						version = ary[1];
+						conn.setVersion(version);
+					}
+					// for the information print out the string data.
+/*					if(data.length() > 4) {
+						System.out.println(data);
+					}*/
 				}
 				i = 0;
 				b = new byte[buffer.capacity()];
@@ -96,18 +110,77 @@ public class WebSocketHandshake {
 		}
 		key3 = b;
 		// start the handshake reply
-		doHandShake();
+		if(version.equals("")) {
+			try {
+				doHybi00HandShake();
+			}
+			catch(WebSocketException e) {
+				// send eof before closing connection.
+				IoBuffer buf = IoBuffer.allocate(4);
+				buf.put(new byte[]{(byte)0xFF, (byte)0x00});
+				buf.flip();
+				conn.send(buf);
+				// close connection.
+				conn.close();
+				throw e; // throw the data again.
+			}
+		}
+		else {
+			try {
+				doRFC6455Handshake();
+			}
+			catch (WebSocketException e) {
+				// TODO have to understand close for rfc6455
+				conn.close();
+				throw e;
+			}
+		}
+	}
+	private void doRFC6455Handshake() throws WebSocketException {
+		if(key == null) {
+			throw new WebSocketException("key data is missing!");
+		}
+		String guid = "258EAFA5-E914-47DA-95CA-C5AB0DC85B11";
+		try {
+			MessageDigest md = MessageDigest.getInstance("SHA");
+			byte[] dat = (key + guid).getBytes();
+			md.update(dat);
+			IoBuffer buf = IoBuffer.allocate(2048);
+			byte[] bb = {0x0D, 0x0A};
+			buf.put("HTTP/1.1 101 Web Socket Protocol Handshake".getBytes());
+			buf.put(bb);
+			buf.put("Upgrade: WebSocket".getBytes());
+			buf.put(bb);
+			buf.put("Connection: Upgrade".getBytes());
+			buf.put(bb);
+			buf.put("Sec-WebSocket-Accept: ".getBytes());
+			buf.put((new String(Base64.encodeBase64Chunked(md.digest()))).getBytes());
+			buf.put(bb);
+			buf.flip();
+			// write the data on session
+			conn.getSession().write(buf);
+			// handshake is finished.
+			conn.setConnected();
+			WebSocketScopeManager manager = new WebSocketScopeManager();
+			manager.addConnection(conn);
+			System.out.println("HandShake complete");
+		}
+		catch (Exception e) {
+		}
 	}
 	/**
 	 * start the handshake reply
 	 * @param key3
 	 */
-	private void doHandShake() throws WebSocketException {
+	private void doHybi00HandShake() throws WebSocketException {
+		if(path == null) {
+			throw new WebSocketException("get data is invalid!");
+		}
 		if(key3 == null) {
 			throw new WebSocketException("last byte is incollect!");
 		}
 		if(key1 == null || key2 == null) {
-			throw new WebSocketException("key data is missing");
+			throw new WebSocketException("key data is missing!");
 		}
 		// calicurate first 16 byte of integer data;
 		byte[] b = new byte[16];
@@ -162,7 +235,7 @@ public class WebSocketHandshake {
 		conn.getSession().write(buf);
 		// handshake is finished.
 		conn.setConnected();
-		// scopeÇÇ¬Ç≠Ç¡ÇƒÇ®Ç≠ÅB
+		// scope register
 		WebSocketScopeManager manager = new WebSocketScopeManager();
 		manager.addConnection(conn);
 		System.out.println("HandShake complete");

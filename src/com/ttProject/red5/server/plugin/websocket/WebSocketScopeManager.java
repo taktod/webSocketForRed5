@@ -1,29 +1,29 @@
 package com.ttProject.red5.server.plugin.websocket;
 
 import java.util.HashMap;
-import java.util.HashSet;
 import java.util.Map;
-import java.util.Set;
 
 /**
  * to manage scopes.
  * @author todatakahiko
  */
 public class WebSocketScopeManager {
-	private static Set<String> pluginedApplicationSet = new HashSet<String>();
+	private static Map<String, IWebSocketDataListener> pluginedApplicationMap = new HashMap<String, IWebSocketDataListener>();
 	private static Map<String, WebSocketScope> scopes = new HashMap<String, WebSocketScope>();
 
 	/**
 	 * @return true:valid application name,
 	 */
-	public boolean isPluginedApplication(String application) {
-		return pluginedApplicationSet.contains(application);
+	public boolean isPluginedApplication(String scope) {
+		// figure out application name from access path.
+		String[] data = scope.split("/", 2);
+		return pluginedApplicationMap.containsKey(data[0]);
 	}
 	/**
 	 * @param application application name.
 	 */
-	public void addPluginedApplication(String application) {
-		pluginedApplicationSet.add(application);
+	public void addPluginedApplication(String application, IWebSocketDataListener listener) {
+		pluginedApplicationMap.put(application, listener);
 	}
 	/**
 	 * @param path scope path.
@@ -57,7 +57,7 @@ public class WebSocketScopeManager {
 	/**
 	 * add the listener on scope
 	 * @param listener IWebSocketDataListener
-	 */
+	 * /
 	public void addListener(IWebSocketDataListener listener) {
 		WebSocketScope scope;
 		scope = getScope(listener);
@@ -66,7 +66,7 @@ public class WebSocketScopeManager {
 	/**
 	 * remove listener from scope.
 	 * @param listener IWebSocketDataListener
-	 */
+	 * /
 	public void removeListener(IWebSocketDataListener listener) {
 		WebSocketScope scope;
 		scope = getScope(listener);
@@ -82,21 +82,31 @@ public class WebSocketScopeManager {
 	 * @return
 	 */
 	private WebSocketScope getScope(WebSocketConnection conn) {
-		WebSocketScope scope;
 		if(!scopes.containsKey(conn.getPath())) {
-			scope = new WebSocketScope(conn.getPath());
+			WebSocketScope scope;
+			scope = new WebSocketScope(conn.getPath(), getListenerFromApplication(conn.getPath()));
 			scopes.put(conn.getPath(), scope);
+			return scope;
 		}
 		else {
-			scope = scopes.get(conn.getPath());
+			return scopes.get(conn.getPath());
 		}
-		return scope;
+	}
+	/**
+	 * pathからListenerオブジェクトを取得し、登録する。
+	 * @param path
+	 * @return
+	 */
+	private IWebSocketDataListener getListenerFromApplication(String path) {
+		// pathからアプリケーションを取得する。
+		String[] data = path.split("/", 2);
+		return pluginedApplicationMap.get(data[0]);
 	}
 	/**
 	 * get corresponding scope, if no scope, make new one.
 	 * @param listener 
 	 * @return
-	 */
+	 * /
 	private WebSocketScope getScope(IWebSocketDataListener listener) {
 		WebSocketScope scope;
 		if(!scopes.containsKey(listener.getPath())) {
@@ -107,5 +117,5 @@ public class WebSocketScopeManager {
 			scope = scopes.get(listener.getPath());
 		}
 		return scope;
-	}
+	}// */
 }
