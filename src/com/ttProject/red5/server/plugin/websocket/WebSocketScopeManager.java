@@ -55,28 +55,6 @@ public class WebSocketScopeManager {
 		}
 	}
 	/**
-	 * add the listener on scope
-	 * @param listener IWebSocketDataListener
-	 * /
-	public void addListener(IWebSocketDataListener listener) {
-		WebSocketScope scope;
-		scope = getScope(listener);
-		scope.addListener(listener);
-	}
-	/**
-	 * remove listener from scope.
-	 * @param listener IWebSocketDataListener
-	 * /
-	public void removeListener(IWebSocketDataListener listener) {
-		WebSocketScope scope;
-		scope = getScope(listener);
-		scope.removeListener(listener);
-		if(!scope.isValid()) {
-			// scope is not valid. delete this.
-			scopes.remove(scope);
-		}
-	}
-	/**
 	 * get corresponging scope, if no scope, make new one.
 	 * @param conn 
 	 * @return
@@ -98,24 +76,7 @@ public class WebSocketScopeManager {
 	 * @return
 	 */
 	private IWebSocketDataListener getListenerFromApplication(String path) {
-		// pathからアプリケーションを取得する。
 		String[] data = path.split("/", 2);
 		return pluginedApplicationMap.get(data[0]);
 	}
-	/**
-	 * get corresponding scope, if no scope, make new one.
-	 * @param listener 
-	 * @return
-	 * /
-	private WebSocketScope getScope(IWebSocketDataListener listener) {
-		WebSocketScope scope;
-		if(!scopes.containsKey(listener.getPath())) {
-			scope = new WebSocketScope(listener.getPath());
-			scopes.put(listener.getPath(), scope);
-		}
-		else {
-			scope = scopes.get(listener.getPath());
-		}
-		return scope;
-	}// */
 }

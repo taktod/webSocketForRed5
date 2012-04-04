@@ -23,7 +23,6 @@ public class WebSocketHandshake {
 	private String path;
 	private byte[] key3;
 	private String version;
-	private String query;
 	private String key;
 	/**
 	 * constructor with connection object.
@@ -49,7 +48,6 @@ public class WebSocketHandshake {
 			if(bi == 0x0D || bi == 0x0A) {
 				if(b.length != 0) {
 					data = (new String(b)).trim();
-//					System.out.println(data);
 					if(data.contains("GET ")) {
 						// get the path data for handShake
 						Pattern pattern = Pattern.compile("GET \\/([\\w\\/]*)\\??(.*) HTTP\\/1.1");
@@ -61,9 +59,11 @@ public class WebSocketHandshake {
 								break;
 							}
 							path = matcher.group(1);
-							conn.setPath(path);
-							query = matcher.group(2);
-							conn.setQuery(query);
+							if(matcher.group(2) != null) {
+								path += "?" + matcher.group(2);
+							}
+							conn.setPath(matcher.group(1));
+							conn.setQuery(matcher.group(2));
 						}
 					}
 					else if(data.contains("Sec-WebSocket-Key1: ")) {
@@ -95,10 +95,6 @@ public class WebSocketHandshake {
 						version = ary[1];
 						conn.setVersion(version);
 					}
-					// for the information print out the string data.
-/*					if(data.length() > 4) {
-						System.out.println(data);
-					}*/
 				}
 				i = 0;
 				b = new byte[buffer.capacity()];
@@ -112,9 +108,12 @@ public class WebSocketHandshake {
 		// start the handshake reply
 		if(version.equals("")) {
 			try {
+//				System.out.println("hybi 00");
 				doHybi00HandShake();
 			}
 			catch(WebSocketException e) {
+				System.out.println("exception occuered...");
+				e.printStackTrace();
 				// send eof before closing connection.
 				IoBuffer buf = IoBuffer.allocate(4);
 				buf.put(new byte[]{(byte)0xFF, (byte)0x00});
@@ -127,9 +126,12 @@ public class WebSocketHandshake {
 		}
 		else {
 			try {
+//				System.out.println("rfc6455");
 				doRFC6455Handshake();
 			}
 			catch (WebSocketException e) {
+				System.out.println("exception occuered...");
+				e.printStackTrace();
 				// TODO have to understand close for rfc6455
 				conn.close();
 				throw e;
@@ -222,9 +224,11 @@ public class WebSocketHandshake {
 		buf.put(bb);
 		buf.put("Upgrade: WebSocket".getBytes());
 		buf.put(bb);
+		buf.put("Connection: Upgrade".getBytes());
+		buf.put(bb);
 		buf.put(("Sec-WebSocket-Origin: " + origin).getBytes());
 		buf.put(bb);
-		buf.put(("Sec-WebSocket-Location: " + "ws://" + host + path).getBytes());
+		buf.put(("Sec-WebSocket-Location: " + "ws://" + host + "/" + path).getBytes());
 		buf.put(bb);
 		buf.put("Sec-WebSocket-Protocol: sample".getBytes());
 		buf.put(bb);
