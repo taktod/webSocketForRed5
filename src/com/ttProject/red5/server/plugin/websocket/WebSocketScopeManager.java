@@ -79,4 +79,10 @@ public class WebSocketScopeManager {
 		String[] data = path.split("/", 2);
 		return pluginedApplicationMap.get(data[0]);
 	}
+	/**
+	 * @return
+	 */
+	public Map<String, WebSocketScope>getAllScopes() {
+		return new HashMap<String, WebSocketScope>(scopes);
+	}
 }

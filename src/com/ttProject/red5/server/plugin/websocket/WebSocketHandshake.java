@@ -59,7 +59,7 @@ public class WebSocketHandshake {
 								break;
 							}
 							path = matcher.group(1);
-							if(matcher.group(2) != null) {
+							if(matcher.group(2) != null && !"".equals(matcher.group(2))) {
 								path += "?" + matcher.group(2);
 							}
 							conn.setPath(matcher.group(1));
