@@ -15,14 +15,27 @@ import org.apache.mina.core.session.IoSession;
  * </pre>
  */
 public class WebSocketConnection {
-	private boolean connected = false;
+	/** connection session */
 	private IoSession session;
+
+	/** connection data */
 	private String host;
 	private String path;
 	private String origin;
 	private String version = null;
 	private String query;
+
+	/** state control */
+	private boolean connected = false;
+	private boolean continuousData = false;
+
+	/** buffer */
 	private List<IoBuffer> bufferList = new ArrayList<IoBuffer>();
+	private IoBuffer result = null;
+	private byte[] mask = new byte[4];
+	private int maskPos;
+	private long size;
+	private byte first;
 	/**
 	 * constructor
 	 */
@@ -202,26 +215,115 @@ public class WebSocketConnection {
 	public void analizeData(IoBuffer buffer) {
 		if(version == null) {
 			// hybi00
-			if(buffer.get() == 0x00) { // check only front byte
-				int size = buffer.capacity() - 2;
-				IoBuffer result = IoBuffer.allocate(size + 4);
-				for(int i = 0;i < size;i ++) {
-					byte data = buffer.get();
-					if(data == (byte)0xFF) { // if hit the end of byte, quit the loop.
-						break;
+			int limit = buffer.limit();
+			while(buffer.position() < limit) {
+				byte data = buffer.get();
+				if(!continuousData) {
+					if(data == 0) {
+						// find first byte
+						result = IoBuffer.allocate(buffer.capacity());
+						result.clear();
+						continuousData = true;
 					}
-					result.put(data);
+					else {
+						// invalid data...
+						break; 
+					}
 				}
-				result.flip();
-				try {
-					getScope().receiveData(this, new String(result.array(), "UTF-8"));
-				}
-				catch (Exception e) {
+				else {
+					if(data == -1) {
+						continuousData = false;
+						result.flip();
+						try {
+							// new string is complete.
+							getScope().receiveData(this, new String(result.array(), "UTF-8"));
+						}
+						catch (Exception e) {
+							;
+						}
+					}
+					else {
+						// in the case of more capacity, remake up result buffer
+						if(result.position() > result.capacity() - 10) {
+							IoBuffer newResult = IoBuffer.allocate(result.capacity() * 8);
+							result.flip();
+							newResult.put(result);
+							result = newResult;
+						}
+						// append new byte
+						result.put(data);
+					}
 				}
 			}
 		}
 		else {
-			// rfc6455
+			while(buffer.position() < buffer.limit()) {
+				if(!continuousData) {
+					// rfc6455
+					first = buffer.get();
+					if((first & 0x0F) != 0x01) { // accept only string
+						return;
+					}
+					continuousData = true;
+					byte second = buffer.get();
+					// get data size
+		//			long size;
+					if((second & 0x7F) == 0x7E) {
+						size = buffer.getShort();
+					}
+					else if((second & 0x7F) == 0x7F){
+						size = buffer.getLong();
+					}
+					else {
+						size = second & 0x7F;
+					}
+					result = IoBuffer.allocate((int)size);
+					if((second & 0x80) != 0x00) {
+						mask[0] = buffer.get();
+						mask[1] = buffer.get();
+						mask[2] = buffer.get();
+						mask[3] = buffer.get();
+						maskPos = 0;
+					}
+					else {
+						mask[0] = 0;
+						mask[1] = 0;
+						mask[2] = 0;
+						mask[3] = 0;
+					}
+					maskPos = 0;
+				}
+				try {
+					for(;maskPos < size;) {
+						result.put((byte)(mask[(maskPos % 4)] ^ buffer.get()));
+						maskPos ++;
+					}
+				}
+				catch (Exception e) {
+					// バッファがなくなったときに呼び出されます。
+					return;
+				}
+				continuousData = false;
+				bufferList.add(result);
+				if((first & 0x80) != 0x00) {
+					// make data string;
+					size = 0;
+					for(IoBuffer buf : bufferList) {
+						size += buf.capacity();
+					}
+					IoBuffer result = IoBuffer.allocate((int)size);
+					for(IoBuffer buf : bufferList) {
+						result.put(buf.flip());
+					}
+					try {
+						getScope().receiveData(this, new String(result.array(), "UTF-8"));
+					}
+					catch (Exception e) {
+					}
+					bufferList.clear();
+				}
+			}
+/*			// rfc6455
 			byte first = buffer.get();
 			if((first & 0x0F) == 0x01) { // accept only string
 				byte second = buffer.get();
@@ -270,7 +372,7 @@ public class WebSocketConnection {
 					}
 					bufferList.clear();
 				}
-			}
+			}*/
 		}
 	}
 	/**
@@ -279,6 +381,10 @@ public class WebSocketConnection {
 	 * @return true:for closing.
 	 */
 	public boolean checkClosing(IoBuffer buffer) {
+		if(continuousData) {
+			// in the case of during getting data. skip the checking eof buffer.
+			return false;
+		}
 		byte data = buffer.get(0);
 		if(version == null) {
 			// hybi00
