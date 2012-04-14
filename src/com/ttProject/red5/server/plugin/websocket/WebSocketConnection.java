@@ -15,14 +15,23 @@ import org.apache.mina.core.session.IoSession;
  * </pre>
  */
 public class WebSocketConnection {
-	private boolean connected = false;
+	/** connection session */
 	private IoSession session;
+
+	/** connection data */
 	private String host;
 	private String path;
 	private String origin;
 	private String version = null;
 	private String query;
+
+	/** state control */
+	private boolean connected = false;
+	private boolean continuousData = false;
+
+	/** buffer */
 	private List<IoBuffer> bufferList = new ArrayList<IoBuffer>();
+	private IoBuffer result = null;
 	/**
 	 * constructor
 	 */
@@ -202,21 +211,44 @@ public class WebSocketConnection {
 	public void analizeData(IoBuffer buffer) {
 		if(version == null) {
 			// hybi00
-			if(buffer.get() == 0x00) { // check only front byte
-				int size = buffer.capacity() - 2;
-				IoBuffer result = IoBuffer.allocate(size + 4);
-				for(int i = 0;i < size;i ++) {
-					byte data = buffer.get();
-					if(data == (byte)0xFF) { // if hit the end of byte, quit the loop.
-						break;
+			int limit = buffer.limit();
+			while(buffer.position() < limit) {
+				byte data = buffer.get();
+				if(!continuousData) {
+					if(data == 0) {
+						// find first byte
+						result = IoBuffer.allocate(buffer.capacity());
+						result.clear();
+						continuousData = true;
 					}
-					result.put(data);
+					else {
+						// invalid data...
+						break; 
+					}
 				}
-				result.flip();
-				try {
-					getScope().receiveData(this, new String(result.array(), "UTF-8"));
-				}
-				catch (Exception e) {
+				else {
+					if(data == -1) {
+						continuousData = false;
+						result.flip();
+						try {
+							// new string is complete.
+							getScope().receiveData(this, new String(result.array(), "UTF-8"));
+						}
+						catch (Exception e) {
+							;
+						}
+					}
+					else {
+						// in the case of more capacity, remake up result buffer
+						if(result.position() > result.capacity() - 10) {
+							IoBuffer newResult = IoBuffer.allocate(result.capacity() * 8);
+							result.flip();
+							newResult.put(result);
+							result = newResult;
+						}
+						// append new byte
+						result.put(data);
+					}
 				}
 			}
 		}
@@ -279,6 +311,10 @@ public class WebSocketConnection {
 	 * @return true:for closing.
 	 */
 	public boolean checkClosing(IoBuffer buffer) {
+		if(continuousData) {
+			// in the case of during getting data. skip the checking eof buffer.
+			return false;
+		}
 		byte data = buffer.get(0);
 		if(version == null) {
 			// hybi00
