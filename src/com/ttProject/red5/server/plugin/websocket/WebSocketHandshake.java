@@ -43,7 +43,6 @@ public class WebSocketHandshake {
 		String data;
 		int i = 0;
 		version = "";
-		System.out.println("start...");
 		for(byte bi:buffer.array()) {
 			if(bi == 0x0D || bi == 0x0A) {
 				if(b.length != 0) {
@@ -112,7 +111,7 @@ public class WebSocketHandshake {
 				doHybi00HandShake();
 			}
 			catch(WebSocketException e) {
-				System.out.println("exception occuered...");
+//				System.out.println("exception occuered...");
 				e.printStackTrace();
 				// send eof before closing connection.
 				IoBuffer buf = IoBuffer.allocate(4);
@@ -130,7 +129,7 @@ public class WebSocketHandshake {
 				doRFC6455Handshake();
 			}
 			catch (WebSocketException e) {
-				System.out.println("exception occuered...");
+//				System.out.println("exception occuered...");
 				e.printStackTrace();
 				// TODO have to understand close for rfc6455
 				conn.close();
@@ -165,7 +164,6 @@ public class WebSocketHandshake {
 			conn.setConnected();
 			WebSocketScopeManager manager = new WebSocketScopeManager();
 			manager.addConnection(conn);
-			System.out.println("HandShake complete");
 		}
 		catch (Exception e) {
 		}
@@ -242,7 +240,6 @@ public class WebSocketHandshake {
 		// scope register
 		WebSocketScopeManager manager = new WebSocketScopeManager();
 		manager.addConnection(conn);
-		System.out.println("HandShake complete");
 	}
 	/**
 	 * calicurate integer data.

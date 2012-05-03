@@ -389,7 +389,6 @@ public class WebSocketConnection {
 		if(version == null) {
 			// hybi00
 			if(data == (byte)0xFF) {
-				System.out.println(buffer.getHexDump());
 				close();
 				return true;
 			}
@@ -397,7 +396,6 @@ public class WebSocketConnection {
 		else {
 			// rfc6455
 			if((data & 0x08) != 0x00) {
-				System.out.println(buffer.getHexDump());
 				close();
 				return true;
 			}
