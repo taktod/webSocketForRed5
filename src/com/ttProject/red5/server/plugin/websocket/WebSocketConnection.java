@@ -159,28 +159,20 @@ public class WebSocketConnection {
 			// size
 			if(size < 126) {
 				// 8bit
-				buffer.put((byte)(0x80 | size));
+				buffer.put((byte)(size));
 			}
 			else if(size < 0x010000) {
 				// 16bit
-				buffer.put((byte)0xFE);
+				buffer.put((byte)0x7E);
 				buffer.putShort((short)size);
 			}
 			else {
 				// 64bit
-				buffer.put((byte)0xFF);
+				buffer.put((byte)0x7F);
 				buffer.putLong(size);
 			}
-			// make up mask bytes
-			int maskInt = new Random().nextInt();
-			byte[] b = new byte[4];
-			b[0] = (byte)((maskInt >> 24) & 0xFF);
-			b[1] = (byte)((maskInt >> 16) & 0xFF);
-			b[2] = (byte)((maskInt >> 8) & 0xFF);
-			b[3] = (byte)(maskInt & 0xFF);
-			buffer.put(b);
 			for(int i=0;i < size;i ++) {
-				buffer.put((byte)(b[(i % 4)] ^ data[i]));
+				buffer.put((byte)(data[i]));
 			}
 			buffer.flip();
 			session.write(buffer);
