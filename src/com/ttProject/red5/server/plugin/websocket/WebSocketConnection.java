@@ -3,7 +3,6 @@ package com.ttProject.red5.server.plugin.websocket;
 import java.io.UnsupportedEncodingException;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Random;
 
 import org.apache.mina.core.buffer.IoBuffer;
 import org.apache.mina.core.session.IoSession;
@@ -154,7 +153,7 @@ public class WebSocketConnection {
 		}
 		else {
 			// rfc6455
-			IoBuffer buffer = IoBuffer.allocate(size + 8);
+			IoBuffer buffer = IoBuffer.allocate(size * 2 + 8);
 			buffer.put((byte)0x81);
 			// size
 			if(size < 126) {
@@ -240,6 +239,7 @@ public class WebSocketConnection {
 							IoBuffer newResult = IoBuffer.allocate(result.capacity() * 8);
 							result.flip();
 							newResult.put(result);
+							newResult.position(newResult.position() - 1);
 							result = newResult;
 						}
 						// append new byte
